@@ -18,4 +18,6 @@ exists(ID) ->
 
 
 title(ID) ->
-	game_master:title(ID).
+	Title = game_server:title(ID),
+	?PRINT(Title),
+	Title.

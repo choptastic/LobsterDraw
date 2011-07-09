@@ -3,7 +3,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -behaviour(gen_server).
 -export([start/2,start_link/2,stop/0,init/1,handle_call/3,terminate/2]).
--export([join/2,draw/2,leave/1,guess/2,ready/1,unready/1]).
+-export([join/2,draw/2,leave/1,guess/2,ready/1,unready/1,title/1,name/1]).
 
 
 
@@ -29,6 +29,9 @@ terminate(Reason,State) ->
 
 handle_call(stop,_From,Game) ->
 	{stop,ok,Game};
+
+handle_call(title,_From,Game) ->
+	{reply,Game#game.name,Game};
 
 handle_call({join,Playername},FromPid,Game) ->
 	Player = #player{
@@ -64,9 +67,14 @@ handle_call(next_round,FromPid,Game) ->
 handle_call(time_up,FromPid,Game) ->
 	ok;
 
-handle_call(_,_,Game) ->
-	{reply,{error,unknown_command},Game}.
+handle_call(Msg,_,Game) ->
+	{reply,{error,unexpected_msg,Msg},Game}.
 
+game_call(Pid,Msg) when is_pid(Pid) ->
+	gen_server:call(Pid,Msg);
+game_call(ID,Msg) when is_integer(ID) ->
+	Pid = game_master:get_pid(ID),
+	game_call(Pid,Msg).
 
 %% DrawAction is formatted based on what is sent from the javascript.
 %% It doesn't matter to us, since we're just redistributing it to the clients
@@ -87,5 +95,11 @@ ready(Pid) ->
 
 unready(Pid) ->
 	ok.
+
+title(Pid) ->
+	game_call(Pid,title).
+
+name(Pid) ->
+	title(Pid).
 
 %% Private functions

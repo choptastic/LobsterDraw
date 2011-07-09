@@ -12,8 +12,11 @@ main() ->
 			wf:redirect("/")
 	end.
 
-id() ->
-	wf:to_integer(wf:path_info()).
+id() ->	
+	case string:to_integer(wf:path_info()) of
+		{error,_} -> 0;
+		{Int,_} -> Int
+	end.
 
 title() ->
 	game:title(id()).

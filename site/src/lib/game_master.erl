@@ -25,26 +25,27 @@ handle_call(stop,_From,Games) ->
 handle_call({new,Name},From,Games) ->
 	ID = crypto:rand_uniform(1,9999999999999999999999999),	%% LOL EXCESSIVE RANDOM
 
-	Pid = game_server:start_link(ID,Name),
+	{ok,Pid} = game_server:start_link(ID,Name),
+	
 
 	%% Games are stored as a list of {ID,Pid,GameName)
 	%% Get more info from the game_server module using the pid
 	{reply,ID,[{ID,Pid,Name} | Games]};
 
 handle_call({get_pid,ID},From,Games) ->
+	?PRINT({checking_pid,ID}),
 	%% Don't need to specify a conditional because ID will match
-	Pids = [Pid || {ID,Pid,_} <- Games],
+	Pids = [Pid || {GameID,Pid,_} <- Games,GameID==ID],
 
 	MyPid = case Pids of
 		[] -> undefined;
-		P -> P
+		[P] -> P
 	end,
 	{reply,MyPid,Games};
 
 handle_call(list,From,Games) ->
 	List = [{ID,Name} || {ID,_,Name} <- Games],
 	{reply,List,Games};		
-
 
 handle_call(_,_,Games) ->
 	Games.
@@ -59,8 +60,10 @@ get_pid(ID) ->
 	gen_server:call(?MODULE,{get_pid,ID}).
 
 exists(ID) ->
-	is_pid(get_pid(ID)).
-	
+	Pid = get_pid(ID),
+	?PRINT(Pid),
+	is_pid(Pid).
+
 
 list() ->
 	gen_server:call(?MODULE,list).
