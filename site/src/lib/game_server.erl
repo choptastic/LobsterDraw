@@ -55,11 +55,13 @@ handle_call({guess,Text},FromPid,Game) ->
 handle_call({draw,DrawAction},FromPid,Game) ->
 	ok;
 
-handle_call(ready,FromPid,Game) ->
-	ok;
-
-handle_call(unready,FromPid,Game) ->
-	ok;
+handle_call({ready,TF},FromPid,Game) ->
+	Player = pl:get(FromPid,Game#game.player),
+	NewPlayer = Player#player{ready=TF},
+	NewGame = Game#game{
+		players=pl:set(Game#game.players,NewPlayer)
+	},
+	{reply,ok,NewGame};
 
 handle_call(next_round,FromPid,Game) ->
 	ok;
@@ -79,25 +81,31 @@ game_call(ID,Msg) when is_integer(ID) ->
 %% DrawAction is formatted based on what is sent from the javascript.
 %% It doesn't matter to us, since we're just redistributing it to the clients
 draw(Pid,DrawAction) ->
-	ok.
+	game_call(Pid,DrawAction).
 
 guess(Pid,Text) ->
-	ok.
+	game_call(Pid,{guess,Text}).
 
 join(Pid,Name) ->
-	ok.
+	game_call(Pid,{join,Name}).
 
 leave(Pid) ->
-	ok.
+	game_call(Pid,leave).
 
 ready(Pid) ->
-	ok.
+	game_call(Pid,{ready,true}).
 
 unready(Pid) ->
-	ok.
+	game_call(Pid,{ready,false}).
 
 title(Pid) ->
 	game_call(Pid,title).
+
+exists(ID) ->
+	game_master:exists(ID).
+
+playerlist(Pid) ->
+	game_call(Pid,playerlist).
 
 name(Pid) ->
 	title(Pid).
