@@ -57,3 +57,27 @@ a, a:visited {
 a:hover, a:active { 
     text-decoration: underline; 
 }
+
+
+.header {
+	font-size:18pt;
+}
+
+table.portal td {
+	width:200px;
+	font-size:10pt;
+	padding:20px;
+}
+
+.join, .make {
+	width:100%;
+	border-radius:15px;
+	border: 1px solid grey;
+	box-shadow: 4px 4px 4px;
+	padding:10px;
+}
+
+.joinheader, .makeheader {
+	font-size:14pt;
+	font-weight:bold;
+}

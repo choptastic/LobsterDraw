@@ -5,31 +5,33 @@
 
 main() -> #template { file="./site/templates/bare.html" }.
 
-title() -> "Welcome to Nitrogen".
+title() -> "Spawnfest Pictionary".
+
+game_list() ->
+	[].
 
 body() ->
-    #container_12 { body=[
-        #grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body() }
-    ]}.
-
-inner_body() -> 
-    [
-        #h1 { text="Welcome to Nitrogen" },
-        #p{},
-        "
-        If you can see this page, then your Nitrogen server is up and
-        running. Click the button below to test postbacks.
-        ",
-        #p{}, 	
-        #button { id=button, text="Click me!", postback=click },
-        #p{},
-        "
-        Run <b>./bin/dev help</b> to see some useful developer commands.
-        "
-    ].
-	
-event(click) ->
-    wf:replace(button, #panel { 
-        body="You clicked the button!", 
-        actions=#effect { effect=highlight }
-    }).
+	[
+		#panel{class=header,text="Spawnfest Pictionary"},
+		#singlerow{class=portal,cells=[
+			#tablecell{body=[
+				#panel{class=join,body=[
+					#panel{class=joinheader,text="Join a game"},
+					#panel{body=game_list()}
+				]}
+			]},
+			#tablecell{body=[
+				#panel{class=make,body=[
+					#panel{class=makeheader,text="Make a game"},
+					#panel{body=[
+						#label{text="Game Name"},
+						#textbox{text=""},
+						#br{},
+						#button{postback=make_game,text="Create It!"}
+					]}
+				]}
+			]}
+		]}
+	].
+						
+		
