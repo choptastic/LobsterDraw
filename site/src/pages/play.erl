@@ -6,7 +6,8 @@
 id() ->
 	wf:path_info().
 
-
+title() ->
+	[].
 
 canvas() ->
 	[].
