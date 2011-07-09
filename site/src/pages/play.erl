@@ -7,6 +7,7 @@ id() ->
 	wf:path_info().
 
 
+
 canvas() ->
 	[].
 
@@ -16,6 +17,10 @@ playerlist() ->
 
 
 clock() ->
+	[].
+
+
+controls() ->
 	[].
 
 
