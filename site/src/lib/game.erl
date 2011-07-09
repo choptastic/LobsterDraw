@@ -1,5 +1,6 @@
 -module(game).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include("records.hrl").
 -compile(export_all).
 
 start(Gamename,Username) ->
