@@ -58,5 +58,9 @@ new(Name) ->
 get_pid(ID) ->
 	gen_server:call(?MODULE,{get_pid,ID}).
 
+exists(ID) ->
+	is_pid(get_pid(ID)).
+	
+
 list() ->
 	gen_server:call(?MODULE,list).
