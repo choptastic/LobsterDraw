@@ -1,5 +1,5 @@
 %% -*- mode: nitrogen -*-
--module (index).
+-module(index).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
@@ -9,11 +9,15 @@ main() -> #template { file="./site/templates/bare.html" }.
 title() -> "Spawnfest Pictionary".
 
 game_list() ->
-	[].
+	Games = game_master:list(),
+	lists:map(fun({ID,Name}) -> [
+		#link{url="/play/" ++ wf:to_list(ID),text=Name},
+		#br{}
+	] end,Games).
 
 body() ->
 	wf:wire(make_game,gamename,#validate{validators=[
-		#is_required{}
+		#is_required{text="Required"}
 	]}),	
 
 	[
