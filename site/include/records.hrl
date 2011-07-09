@@ -1,0 +1,2 @@
+-record(game,{id,players=[],words=[],name=""}).
+-record(player,{id,pid,name="guest",score=0}).
