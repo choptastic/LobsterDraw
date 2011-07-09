@@ -131,3 +131,12 @@ function enable_drawing()
 		});
 	_queue_timer = setInterval(send_queue,300);
 }
+
+function disable_drawing()
+{
+	var canvas = $(".game_canvas")
+		.unbind("mousedown")
+		.unbind("mouseup")
+		.unbind("mousemove");
+	clearInterval(_queue_timer);
+}
