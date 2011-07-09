@@ -4,14 +4,18 @@
 -compile(export_all).
 
 start(Gamename,Username) ->
+	ok.
 	
 
 join(ID) ->
 	wf:comet(fun() -> loop() end).
 
 loop() ->
-	receive
-		'INIT' ->
-			wf:flush();
-		{message,User,Text} ->
-			Text	
+	ok.
+
+exists(ID) ->
+	game_server:exists(ID).
+
+
+title(ID) ->
+	game_server:title(ID).

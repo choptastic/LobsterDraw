@@ -20,20 +20,36 @@ title() ->
 
 
 main_interaction() ->
-	Playername = case wf:cookie(playername,"") of
-		"" -> get_username();
-		_ -> canvas(Playername)
+	%% initialize the api
+	wf:wire(#api{name=queue,tag=unused}),
+
+	case player:name() of
+		Undef when Undef==undefined;Undef=="" ->
+			username_form();
+		Name -> 
+			canvas(Name)
 	end.
 		
+username_form() ->
+	wf:wire(username_cont,name,#validate{validators=[
+		#is_required{}
+	]}),
+	#panel{id=username_form,class=username_form,body=[
+		#label{text="What's your name?"},
+		#textbox{id=name,text=""},
+		#br{},
+		#button{text="Continue",id=username_cont,postback=username}
+	]}.
 
-canvas() ->
-		
-	wf:wire(#api{name=queue,tag=unused}),
-	
+canvas(Playername) ->
 	[
+	#panel{id=headermessage,text=["Welcome ",Playername]},
 	"<canvas class=game_canvas width=640 height=480>Get a browser that doesn't suck</canvas>",
+	#panel{id=controls,body=controls()},
 	#br{},
+
 	"<script>enable_drawing()</script>",
+
 	#button{text="Erase",postback=erase}
 	].
 	
@@ -53,6 +69,10 @@ controls() ->
 
 event(guess) ->
 	GuessText = wf:q(guess);
+event(username) ->
+	Name = wf:q(name),
+	player:name(Name),
+	wf:replace(username_form,canvas(Name));
 event(erase) ->
 	wf:wire("erase()");
 event(_) -> 
