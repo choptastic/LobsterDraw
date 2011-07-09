@@ -1,2 +1,2 @@
--record(game,{id,players=[],words=[],name="",lines=[]}).
+-record(game,{id,pid,players=[],words=[],name="",lines=[]}).
 -record(player,{pid,name="guest",score=0}).
