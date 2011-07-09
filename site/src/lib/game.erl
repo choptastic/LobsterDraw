@@ -14,8 +14,8 @@ loop() ->
 	ok.
 
 exists(ID) ->
-	game_server:exists(ID).
+	game_master:exists(ID).
 
 
 title(ID) ->
-	game_server:title(ID).
+	game_master:title(ID).

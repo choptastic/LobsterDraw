@@ -13,7 +13,7 @@ main() ->
 	end.
 
 id() ->
-	wf:path_info().
+	wf:to_integer(wf:path_info()).
 
 title() ->
 	game:title(id()).
@@ -49,7 +49,6 @@ canvas(Playername) ->
 	#br{},
 
 	"<script>enable_drawing()</script>",
-
 	#button{text="Erase",postback=erase}
 	].
 	

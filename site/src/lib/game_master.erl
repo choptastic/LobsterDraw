@@ -3,7 +3,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -behaviour(gen_server).
 -export([start/0,start_link/0,stop/0,init/1,handle_call/3,terminate/2]).
--export([list/0,new/2,get_pid/1]).
+-export([list/0,new/1,get_pid/1]).
 
 start() ->
 	gen_server:start({local,?MODULE},?MODULE, [], []).
@@ -14,12 +14,18 @@ start_link() ->
 init([]) ->
 	{ok, []}.
 
+stop() ->
+	gen_server:call(?MODULE,stop).
+
+terminate(Reason,State) ->
+	{ok, Reason}.
+
 handle_call(stop,_From,Games) ->
 	{stop,ok,Games};
 handle_call({new,Name},From,Games) ->
 	ID = crypto:rand_uniform(1,9999999999999999999999999),	%% LOL EXCESSIVE RANDOM
 
-	Pid = game_server:start_link(ID,Name)
+	Pid = game_server:start_link(ID,Name),
 
 	%% Games are stored as a list of {ID,Pid,GameName)
 	%% Get more info from the game_server module using the pid
@@ -35,7 +41,7 @@ handle_call({get_pid,ID},From,Games) ->
 	end,
 	{reply,MyPid,Games};
 
-handle_call({list,From,Games}) ->
+handle_call(list,From,Games) ->
 	List = [{ID,Name} || {ID,_,Name} <- Games],
 	{reply,List,Games};		
 
@@ -50,5 +56,7 @@ new(Name) ->
 	gen_server:call(?MODULE,{new,Name}).
 
 get_pid(ID) ->
-	gen_server:call(
+	gen_server:call(?MODULE,{get_pid,ID}).
 
+list() ->
+	gen_server:call(?MODULE,list).
