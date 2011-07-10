@@ -422,7 +422,10 @@ exists(ID) ->
 	game_master:exists(ID).
 
 playerlist(Pid) ->
-	game_call(Pid,playerlist).
+	Players = game_call(Pid,playerlist),
+	lists:sort(fun(P1,P2) ->
+		P1#player.score > P2#player.score
+	end,Players).
 
 name(Pid) ->
 	title(Pid).
