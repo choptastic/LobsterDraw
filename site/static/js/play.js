@@ -154,7 +154,7 @@ function enable_drawing()
 
 			}
 		});
-	_queue_timer = setInterval(send_queue,300);
+	_queue_timer = setInterval(send_queue,1000);
 }
 
 function disable_drawing()

@@ -246,6 +246,12 @@ handle_call(new_round,_From,Game) ->
 	%% Let's put that player now to the back of the list so we doesn't draw again immediately
 	NewDrawingPids = DrawingPids ++ [NextPid],
 
+	NewPlayers = pl:map(Game#game.players,fun(P) ->
+		P#player{
+			correct=false
+		}
+	end),
+
 	%% Now we'll make a timer that'll signal the end of the round
 	%% We want to track the timer ref in case everyone gets it right
 	%% In that event, we'll cancel the timer and just move on to the next round
@@ -258,7 +264,8 @@ handle_call(new_round,_From,Game) ->
 		drawing_pid = NextPid,
 		drawing_pids = NewDrawingPids,
 		word=Word,
-		timer_refs = [Tref]
+		timer_refs = [Tref],
+		players = NewPlayers
 	},
 
 	{reply,ok,NewGame};

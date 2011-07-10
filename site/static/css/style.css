@@ -184,6 +184,7 @@ div.guess {
 
 table.canvascontrols {
 	width:500px;
+	margin-bottom:20px;
 }
 
 .erase_button {
@@ -192,6 +193,11 @@ table.canvascontrols {
 
 .you_got_it {
 	font-size:14pt;
+	font-weight:bold;
+	color:#080;
+}
+
+.player_correct {
 	font-weight:bold;
 	color:#080;
 }

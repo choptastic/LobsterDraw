@@ -79,9 +79,14 @@ playerlist() ->
 				false -> ""
 			end,
 
+			CorrectClass = case P#player.correct of
+				true -> player_correct;
+				false -> ""
+			end,
+
 			#tablerow{cells=[
 				#tablecell{class=readystatus,text=Ready},
-				#tablecell{class=playername,text=P#player.name},
+				#tablecell{class=[playername,CorrectClass],text=P#player.name},
 				#tablecell{class=score,text=P#player.score}
 			]};
 			(_) -> []	%% For outdated records
