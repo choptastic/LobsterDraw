@@ -140,3 +140,14 @@ function disable_drawing()
 		.unbind("mousemove");
 	clearInterval(_queue_timer);
 }
+
+function timer_update(secs)
+{
+	_secondsleft = secs;
+}
+
+function round_over()
+{
+	disable_drawing();
+}
+

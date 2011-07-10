@@ -66,7 +66,7 @@ canvas(Playername) ->
 
 playerlist() ->
 	Players = game_server:playerlist(id()),
-	#table{rows=[
+	#table{id=playerlist,rows=[
 		lists:map(fun({Name,Score}) ->
 			#tablerow{cells=[
 				#tablecell{text=Name},
@@ -91,6 +91,9 @@ controls() ->
 activitylog() ->
 	#panel{id=activitylog}.
 
+
+update_playerlist() ->
+	wf:replace(playerlist,playerlist()).
 
 %% -----------------actions and postbacksx-----------------------%%
 
@@ -142,8 +145,8 @@ game_loop(GamePid) ->
 			in_join(Player);
 		{leave,Player} ->
 			in_leave(Player);
-		{correct,Player} ->
-			in_correct(Player);
+		{correct,Player,Points} ->
+			in_correct(Player,Points);
 		{ready,Player} ->
 			in_ready(Player);
 		{unready,Player} ->
@@ -154,6 +157,8 @@ game_loop(GamePid) ->
 			in_queue(ActionList);
 		{new_round,Player} ->
 			in_new_round(Player);
+		{round_over} ->
+			in_round_over();
 		{you_are_up,Word} ->
 			in_you_are_up(Word);
 		{timer_update,SecondsLeft} ->
@@ -164,12 +169,58 @@ game_loop(GamePid) ->
 	wf:flush(),
 	game_loop(GamePid).
 
+add_message(Class,Msg) ->
+	wf:insert_bottom(activitylog,#panel{text=Msg,class=Class}).
+	
 in_join(Player) ->
-	wf:update(
+	add_message(log_join,Player ++ " has joined the game"),
+	update_playerlist().
 
+in_leave(Player) ->
+	add_message(log_leave,Player ++ " has left the game "),
+	update_playerlist().
+
+in_correct(Player,Points) ->
+	add_message(log_correct,Player ++ " got it for " ++ wf:to_list(Points) ++ " points"),
+	update_playerlist().
+
+in_ready(Player) ->
+	add_message(log_ready,Player ++ " is ready to start"),
+	update_playerlist().
+
+in_unready(Player) ->
+	add_message(log_unready,Player ++ " is not ready to start"),
+	update_playerlist().
+
+in_all_correct() ->
+	add_message(log_correct,"Everyone got it!").
+
+in_queue(Queue) ->
+	NewQueue = encode_queue(Queue),
+	wf:wire("load_queue(" ++ NewQueue ++ ")").
 
 in_you_are_up(Word) ->
-	wf:update(headermessage,"It's your turn to draw. Your word: " ++ Word).
+	wf:update(headermessage,"It's your turn to draw. Your word: " ++ Word),
+	wf:wire("enable_drawing()").
 
 in_new_round(Player) ->
-	wf:update(headermessage,"It's " ++ Player ++ "'s turn to draw").
+	wf:update(headermessage,"It's " ++ Player ++ "'s turn to draw"),
+	wf:wire("start_round()").
+
+in_round_over() ->
+	wf:wire("round_over()").
+
+in_timer_update(SecondsLeft) ->
+	wf:wire("timer_update(" ++ wf:to_list(SecondsLeft) ++ ")").
+
+
+%% I use a bunch of ++'s here. I know it's slow, so sue me
+encode_queue(Queue) ->
+	Q1 = lists:map(fun([Act,Rest]) ->
+		StrRest = case Rest of
+			[] -> "";
+			_ -> "," ++ Rest ++ string:join(",",lists:map(fun wf:to_list/1,Rest))
+		end,
+		"[\"" ++ wf:to_list(Act) ++ "\"" ++ StrRest ++ "]"
+	end,Queue),
+	"[" ++ string:join(",",Q1) ++ "]".

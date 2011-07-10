@@ -50,7 +50,8 @@ handle_call(leave,FromPid,Game) ->
 	{reply,ok,NewGame};
 
 handle_call({guess,Text},FromPid,Game) ->
-	ok;
+	NewG = string:to_lower(Text),
+
 
 handle_call({draw,DrawAction},FromPid,Game) ->
 	ok;
@@ -80,8 +81,8 @@ game_call(ID,Msg) when is_integer(ID) ->
 
 %% DrawAction is formatted based on what is sent from the javascript.
 %% It doesn't matter to us, since we're just redistributing it to the clients
-draw(Pid,DrawAction) ->
-	game_call(Pid,DrawAction).
+draw(Pid,DrawActions) ->
+	game_call(Pid,{queue,DrawActions}).
 
 guess(Pid,Text) ->
 	game_call(Pid,{guess,Text}).
