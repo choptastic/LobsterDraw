@@ -1,0 +1,20 @@
+Copyright (c) 2011 by Jesse Gumm
+@jessegumm
+gumm@sigma-star.com
+
+
+A Pictionary-inspired game written for the Erlang-based Nitrogen Web Framework for the Spawnfest 2011 Competition.
+
+This is using the latest (as of 2011-07-10) version of the Nitrogen Web Framework found on Github (http://github.com/nitrogen)
+
+To run, you'll want to first run 'make' then 'bin/nitrogen console'
+
+It includes a copy of erts 5.8.4 and uses mochiweb as it's webserver.
+
+The only really interesting part (where the code goes) is in site/
+
+There are two pages: /index and /play
+
+
+
+I haven't picked a license for it yet
