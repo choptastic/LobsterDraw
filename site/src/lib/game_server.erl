@@ -73,11 +73,11 @@ handle_call({join,Playername},{FromPid,_},Game) ->
 
 %% A player has left the game
 handle_call(leave,{FromPid,_},Game) ->
-	%% Let's get the player's name
-	Player = pl:get(Game#game.players,FromPid),
+	Player = pl:get(Game#game.players,FromPid,undefined),
 	case Player of
 		undefined -> {reply,ok,Game};
 		_ ->
+			%% Let's get the player's name
 			Playername = Player#player.name,
 
 			%% then we'll remove him from the list of players

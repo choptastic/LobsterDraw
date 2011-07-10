@@ -307,7 +307,7 @@ in_new_round(Player) ->
 	wf:wire("start_round();").
 
 in_round_over(Word) ->
-	wf:wire("round_over()"),
+	wf:wire("round_over();"),
 	add_message(log_round_over,"Round Over. The word was " ++ Word).
 
 in_timer_update(SecondsLeft) ->
@@ -316,7 +316,7 @@ in_timer_update(SecondsLeft) ->
 
 in_game_over() ->
 	wf:update(headermessage,"Game Over"),
-	wf:wire("game_over()"),
+	wf:wire("game_over();"),
 	wf:update(clock,ready_button()).
 
 in_are_you_there() ->
@@ -325,14 +325,16 @@ in_are_you_there() ->
 	wf:wire("page.i_am_here();").
 
 catch_me_up() ->
-	case game_server:seconds_left(id()) of
-		N when is_integer(N) and N>0 ->
-			wf:wire("timer_update(" ++ wf:to_list(N) ++ ")");
+	Secs = game_server:seconds_left(id()),
+	?PRINT(Secs),
+	case Secs of
+		N when is_integer(N) andalso N>0 ->
+			wf:wire("timer_update(" ++ wf:to_list(N) ++ ");");
 		_ ->
 			wf:update(clock,"&#8734;")
 	end,
-	wf:wire("disable_drawing()"),
-	wf:wire("start_round()"),
+	wf:update(controls,chatcontrols()),
+	wf:wire("disable_drawing();"),
 	[].
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me
