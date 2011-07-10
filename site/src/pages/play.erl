@@ -114,7 +114,7 @@ event(_) ->
 	ok.
 
 api_event(queue,_,ActionList) ->
-	?PRINT(ActionList).
+	send_to_comet(fun(GamePid) -> game_server:queue(GamePid,ActionList) end).
 
 
 
