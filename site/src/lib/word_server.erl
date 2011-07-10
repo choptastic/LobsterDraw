@@ -34,7 +34,13 @@ load(Path) ->
 	{ok,Data} = file:read_file(Path),
 	String = binary_to_list(Data),
 	List = string:tokens(String,"\n"),
-	gen_server:call(?MODULE,{load,List}).
+
+	%% Slow list randomize sorting, but I'm out of time 
+	List2 = lists:sort(fun(_,_) -> 
+		crypto:rand_uniform(1,2)==2
+	end,List),
+		
+	gen_server:call(?MODULE,{load,List2}).
 
 get(Num) ->
 	gen_server:call(?MODULE,{get,Num}).
