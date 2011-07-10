@@ -1,11 +1,13 @@
 -record(game,{
 	id,
 	pid,
+	word,
 	players=[],
 	words=[],
 	name="",
 	lines=[],
 	drawing_pid=undefined,
+	timer_refs=[],
 	going=false
 }).
 

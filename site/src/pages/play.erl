@@ -57,7 +57,8 @@ canvas(Playername) ->
 	[
 		#panel{id=headermessage,text=["Welcome ",Playername]},
 		"<canvas class=game_canvas width=640 height=480>Get a browser that doesn't suck</canvas>",
-		#panel{id=controls,body=controls()},
+		#panel{id=canvascontrols,class=canvascontrols,body=canvascontrols()},
+		#panel{id=chatcontrols,class=chatcontrols,body=chatcontrols()},
 		#br{},
 
 
@@ -81,14 +82,22 @@ playerlist() ->
 ready_button() ->
 	#button{text="Ready",postback=ready}.
 
+unready_button() ->
+	#button{text="Not Ready",postback=unready}.
+
 clock() ->
 	#panel{id=clock,body=[
 		ready_button()
 	]}.
 
 
-controls() ->
+canvascontrols() ->
 	[].
+
+chatcontrols() ->
+	[
+		#textbox{class=guess,id=guess,text="",postback=guess}
+	].
 
 
 activitylog() ->
@@ -105,9 +114,11 @@ event(username) ->
 	player:name(Name),
 	wf:replace(username_form,canvas(Name));
 event(ready) ->
-	send_to_comet(fun(GamePid) -> game_server:ready(GamePid) end);
+	send_to_comet(fun(GamePid) -> game_server:ready(GamePid) end),
+	wf:update(clock,unready_button());
 event(unready) ->
-	send_to_comet(fun(GamePid) -> game_server:unready(GamePid) end);
+	send_to_comet(fun(GamePid) -> game_server:unready(GamePid) end),
+	wf:update(clock,ready_button());
 event(guess) ->
 	Guess = wf:q(guess),
 	send_to_comet(fun(GamePid) -> game_server:guess(GamePid,Guess) end);
@@ -166,6 +177,8 @@ game_loop(GamePid) ->
 			in_you_are_up(Word);
 		{timer_update,SecondsLeft} ->
 			in_timer_update(SecondsLeft);
+		{get_ready,Player} ->
+			in_get_ready(Player);
 		{from_page,Fun} ->
 			Fun(GamePid)
 	after 5000 ->
@@ -203,6 +216,11 @@ in_all_correct() ->
 in_queue(Queue) ->
 	NewQueue = encode_queue(Queue),
 	wf:wire("load_queue(" ++ NewQueue ++ ");").
+
+in_get_ready(Player) ->
+	wf:update(headermessage,"The Game is about to start.  It will be " ++ Player ++ "'s turn to draw"),
+	add_message(log_ready,"The game is about to start. Get Ready"),
+	wf:update(clock,"&#8734;").
 
 in_you_are_up(Word) ->
 	wf:update(headermessage,"It's your turn to draw. Your word: " ++ Word),

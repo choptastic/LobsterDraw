@@ -57,7 +57,7 @@ handle_call(leave,{FromPid,_},Game) ->
 
 handle_call({guess,Text},{FromPid,_},Game) ->
 	NewG = string:to_lower(Text),
-	Target = hd(Game#game.words),
+	Target = Game#game.word,
 	case NewG of
 		Target -> 
 			Player = pl:get(Game#game.players,FromPid),
@@ -98,13 +98,55 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 
 	to_all_players(NewGame,Msg),
 
+	case should_we_start(NewGame) of
+		true ->
+			StartGame = NewGame#game{
+				words=word_server:get(20),
+				going=true,
+
+			},
+			
+			{_,NextPlayer} = hd(NewGame#game.players),
+			Playername = NextPlayer#player.name,
+
+			to_all_players(NewGame,{get_ready,Playername}),
+
+			timer:apply_after(5000,?MODULE,new_round,[self()]),
+
+			{reply,ok,StartGame};
+		false ->
+			{reply,ok,NewGame}
+	end;
+
+
+handle_call(new_round,_From,Game) ->
+	[{NextPid,NextPlayer} | Players] = Game#players,
+	[Word | Remaining] = Game#words,
+
+	to_player(NextPid,{you_are_up,Word}),
+	to_all_players_except(Game,NextPid,{new_round,NextPlayer#player.name}),
+
+	NewPlayers = Players ++ [{NextPid,NextPlayer}],
+
+	{ok,Tref} = timer:apply_after(60000,?MODULE,time_up,[]),
+
+	NewGame = Game#game{
+		players=NewPlayers,
+		words=Remaining,
+		drawing_pid = NextPid,
+		word=Word,
+		timer_refs = [Tref]
+	},
+
 	{reply,ok,NewGame};
 
-handle_call(next_round,_From,Game) ->
-	{reply,ok,Game};
-
 handle_call(time_up,_From,Game) ->
-	{reply,ok,Game};
+	to_all_players(Game,{time_up,Game#game.word}),
+	NewGame = Game#game{
+		drawing_pid=undefined
+	},
+	{reply,ok,NewGame};
+
 
 handle_call(Msg,_,Game) ->
 	{reply,{error,unexpected_msg,Msg},Game}.
@@ -176,4 +218,13 @@ playerlist(Pid) ->
 name(Pid) ->
 	title(Pid).
 
+new_round(Pid) ->
+	game_call(Pid,new_round).
+
 %% Private functions
+
+should_we_start(Game) ->
+	Total = length(Game#game.players),
+	Ready = length([P || {_,P} <- Game#game.players,P#player.ready==true]),
+	Ready > Total/2.
+	
