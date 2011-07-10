@@ -55,7 +55,15 @@ function send_queue()
 }
 
 
-		
+function setcolor(color)
+{
+	_color = color;	
+}
+
+function setwidth(width)
+{
+	_width = width;
+}
 
 function line(color,width,x1,y1,x2,y2)
 {
@@ -115,6 +123,7 @@ function get_coords(e)
 function enable_drawing() 
 {
 	var canvas = $(".game_canvas")
+		.addClass("game_up")
 		.mousedown(function(e) {
 			_drawing = true;
 			_lastcoords = get_coords(e);
@@ -140,6 +149,7 @@ function enable_drawing()
 function disable_drawing()
 {
 	var canvas = $(".game_canvas")
+		.removeClass("game_up")
 		.unbind("mousedown")
 		.unbind("mouseup")
 		.unbind("mousemove");

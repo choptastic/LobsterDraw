@@ -51,12 +51,13 @@ username_form() ->
 		#button{text="Continue",id=username_cont,postback=username}
 	]}.
 
+
 canvas(Playername) ->
 	{ok,CometPid} = wf:comet(fun() -> game_join(Playername) end),
 	wf:state(cometpid,CometPid),
 
 	[
-		#panel{id=headermessage,text=["Welcome ",Playername]},
+		#panel{id=headermessage,class=headermessage,text=["Welcome ",Playername]},
 		"<canvas class=game_canvas width=500 height=300>Get a browser that doesn't suck</canvas>",
 		#panel{id=canvascontrols,class=canvascontrols,body=canvascontrols()},
 		#panel{id=chatcontrols,class=chatcontrols,body=chatcontrols()},
@@ -72,19 +73,26 @@ playerlist() ->
 	Players = game_server:playerlist(id()),
 	#table{id=playerlist,rows=[
 		lists:map(fun(P=#player{}) ->
+
+			Ready = case P#player.ready of
+				true -> " (ready)";
+				false -> ""
+			end,
+
 			#tablerow{cells=[
-				#tablecell{text=P#player.name},
-				#tablecell{text=P#player.score}
+				#tablecell{class=readystatus,text=Ready},
+				#tablecell{class=playername,text=P#player.name},
+				#tablecell{class=score,text=P#player.score}
 			]};
 			(_) -> []	%% For outdated records
 		end,Players)
 	]}.
 
 ready_button() ->
-	#button{text="Ready",postback=ready}.
+	#button{class=ready,text="Ready",postback=ready}.
 
 unready_button() ->
-	#button{text="Not Ready",postback=unready}.
+	#button{class=unready,text="Not Ready",postback=unready}.
 
 clock() ->
 	#panel{id=clock,body=[
@@ -270,4 +278,6 @@ encode_queue(ActionList) ->
 encode_queue_item(N) when is_integer(N) ->
 	wf:to_list(N);
 encode_queue_item(AS) when is_atom(AS);is_list(AS) ->
-	"\"" ++ wf:to_list(AS) ++ "\"".
+	"\"" ++ wf:to_list(AS) ++ "\"";
+encode_queue_item(_) ->
+	"null".

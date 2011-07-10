@@ -77,6 +77,10 @@ handle_call({guess,Text},{FromPid,_},Game) ->
 	Player = pl:get(Game#game.players,FromPid),
 
 	if
+		%% If there's no word, then we haven't really started
+		Game#game.word==undefined ->
+			{reply,ok,Game};
+
 		%% Don't honor guesses from the current player that's drawing
 		FromPid == Game#game.drawing_pid -> 
 			{reply,ok,Game};
@@ -216,8 +220,10 @@ handle_call(round_over,_From,Game) ->
 	to_all_players(Game,{round_over,Game#game.word}),
 
 	%% No one is drawing right now
+	%% Between rounds, there is no word
 	NewGame = Game#game{
-		drawing_pid=undefined
+		drawing_pid=undefined,
+		word=undefined
 	},
 	
 	case length(Game#game.words) of
