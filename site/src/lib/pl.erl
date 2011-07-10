@@ -26,21 +26,21 @@ set(PL,[{Key,Val} | Rest]) ->
 	set(NewPL,Rest).
 
 
-get(PL,Keys,Default) when is_list(Keys) ->
+get(PL,Keys,Default) when is_list(Keys),is_list(PL) ->
 	[get(PL,Key,Default) || Key<-Keys];
-get(PL,Key,Default) ->
+get(PL,Key,Default) when is_list(PL) ->
 	proplists:get_value(Key,PL,Default).
 
 
-get(PL,Keys) when is_list(Keys) ->
+get(PL,Keys) when is_list(Keys),is_list(PL) ->
 	get(PL,Keys,"");
-get(PL,Key) ->
+get(PL,Key) when is_list(PL) ->
 	get(PL,Key,"").
 
 
-delete(PL,[Key|RestKeys]) ->
+delete(PL,[Key|RestKeys]) when is_list(PL) ->
 	NewPL = delete(PL,Key),
 	delete(NewPL,RestKeys);
-delete(PL,Key) ->
+delete(PL,Key) when is_list(PL) ->
 	[{K,V} || {K,V} <- PL,K /= Key].
 

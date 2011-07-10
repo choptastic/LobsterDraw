@@ -48,7 +48,7 @@ function send_queue()
 		to_send[i][0] = Bert.atom(to_send[i][0]);
 	}
 	if(to_send.length>0)
-		page.queue(to_send);
+		page.pict_api(to_send);
 }
 		
 

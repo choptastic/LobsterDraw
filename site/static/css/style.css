@@ -86,5 +86,20 @@ table.portal td {
 	border:1px solid black;
 }
 
+.playerlist {
+	position:absolute;
+	left:670px;
+	top:80px;
+}
 
+.playerlist table td {
+	padding:4px 10px 4px 10px;
+}
+
+.clock {
+	position:absolute;
+	left:670px;
+	font-size:14pt;
+	top:40px;
+}
 

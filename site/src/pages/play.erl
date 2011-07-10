@@ -13,11 +13,14 @@ main() ->
 	end.
 
 id() ->	
+	?PRINT(wf:state(gameid)),
 	case wf:state(gameid) of
 		undefined ->
 			case string:to_integer(wf:path_info()) of
 				{error,_} -> 0;
-				{Int,_} -> wf:state(gameid,Int)
+				{Int,_} -> 
+					wf:state(gameid,Int),
+					Int
 			end;
 		ID -> ID
 	end.
@@ -28,7 +31,7 @@ title() ->
 
 main_interaction() ->
 	%% initialize the api
-	wf:wire(#api{name=queue,tag=unused}),
+	wf:wire(#api{name=pict_api,tag=unused}),
 
 	case player:name() of
 		Undef when Undef==undefined;Undef=="" ->
@@ -49,7 +52,7 @@ username_form() ->
 	]}.
 
 canvas(Playername) ->
-	CometPid = wf:comet(fun() -> game_join(Playername) end),
+	{ok,CometPid} = wf:comet(fun() -> game_join(Playername) end),
 	wf:state(cometpid,CometPid),
 
 	[
@@ -67,11 +70,12 @@ canvas(Playername) ->
 playerlist() ->
 	Players = game_server:playerlist(id()),
 	#table{id=playerlist,rows=[
-		lists:map(fun({Name,Score}) ->
+		lists:map(fun(P=#player{}) ->
 			#tablerow{cells=[
-				#tablecell{text=Name},
-				#tablecell{text=Score}
-			]}
+				#tablecell{text=P#player.name},
+				#tablecell{text=P#player.score}
+			]};
+			(_) -> []	%% For outdated records
 		end,Players)
 	]}.
 
@@ -113,7 +117,7 @@ event(erase) ->
 event(_) -> 
 	ok.
 
-api_event(queue,_,ActionList) ->
+api_event(pict_api,_,ActionList) ->
 	send_to_comet(fun(GamePid) -> game_server:queue(GamePid,ActionList) end).
 
 
@@ -124,7 +128,7 @@ api_event(queue,_,ActionList) ->
 %% The alternative would be to allow multiple pids per client, this way seems easier right now
 %% Maybe it's a mistake
 %% The fun must be arity 1 and the only argument should be GamePid, which will be passed in by the loop
-send_to_comet(Fun) ->
+send_to_comet(Fun) when is_function(Fun,1) ->
 	Pid = wf:state(cometpid),
 	Pid ! {from_page,Fun}.
 

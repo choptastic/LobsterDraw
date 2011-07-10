@@ -13,5 +13,6 @@
 	pid,
 	name="guest",
 	score=0,
-	ready=false
+	ready=false,
+	correct=false
 }).

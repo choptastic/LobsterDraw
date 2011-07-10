@@ -24,7 +24,7 @@ init({ID,Name}) ->
 stop() ->
 	gen_server:call(?MODULE,stop).
 
-terminate(Reason,State) ->
+terminate(Reason,_State) ->
 	{ok, Reason}.
 
 handle_call(stop,_From,Game) ->
@@ -33,7 +33,7 @@ handle_call(stop,_From,Game) ->
 handle_call(title,_From,Game) ->
 	{reply,Game#game.name,Game};
 
-handle_call({join,Playername},FromPid,Game) ->
+handle_call({join,Playername},{FromPid,_},Game) ->
 	Player = #player{
 		name=Playername,
 		pid=FromPid
@@ -43,19 +43,20 @@ handle_call({join,Playername},FromPid,Game) ->
 	},
 	{reply,ok,NewGame};
 
-handle_call(leave,FromPid,Game) ->
+handle_call(leave,{FromPid,_},Game) ->
+	?PRINT({leave,FromPid}),
 	NewGame = Game#game{
 		players=pl:delete(Game#game.players,FromPid)
 	},
 	{reply,ok,NewGame};
 
-handle_call({guess,Text},FromPid,Game) ->
+handle_call({guess,Text},{FromPid,_},Game) ->
 	NewG = string:to_lower(Text),
 	Target = hd(Game#game.words),
 	case NewG of
 		Target -> 
 			Player = pl:get(Game#game.players,FromPid),
-			to_all_players(Game,{correct,Player#player.name,10),
+			to_all_players(Game,{correct,Player#player.name,10}),
 			NewPlayer = Player#player{
 				score=Player#player.score + 10,
 				correct=true
@@ -68,26 +69,27 @@ handle_call({guess,Text},FromPid,Game) ->
 			{reply,ok,Game}
 	end;
 			
-handle_call({
+handle_call(playerlist,_From,Game) ->
+	Players = [P || {_,P} <- Game#game.players],
+	{reply,Players,Game};
 
-
-handle_call({queue,ActionList},FromPid,Game) ->
+handle_call({queue,ActionList},{FromPid,_},Game) ->
 	to_all_players_except(Game,FromPid,{queue,ActionList}),
 	{reply,ok,Game};
 
-handle_call({ready,TF},FromPid,Game) ->
-	Player = pl:get(FromPid,Game#game.player),
+handle_call({ready,TF},{FromPid,_},Game) ->
+	Player = pl:get(Game#game.players,FromPid),
 	NewPlayer = Player#player{ready=TF},
 	NewGame = Game#game{
-		players=pl:set(Game#game.players,NewPlayer)
+		players=pl:set(Game#game.players,FromPid,NewPlayer)
 	},
 	{reply,ok,NewGame};
 
-handle_call(next_round,FromPid,Game) ->
-	ok;
+handle_call(next_round,_From,Game) ->
+	{reply,ok,Game};
 
-handle_call(time_up,FromPid,Game) ->
-	ok;
+handle_call(time_up,_From,Game) ->
+	{reply,ok,Game};
 
 handle_call(Msg,_,Game) ->
 	{reply,{error,unexpected_msg,Msg},Game}.
@@ -115,7 +117,7 @@ to_all_players_except(Game,ExceptPid,Msg) ->
 all_player_pids(Game) ->
 	[Pid || {Pid,_} <- Game#game.players].
 
-all_players_pids_except(Game,ExceptPid) ->
+all_player_pids_except(Game,ExceptPid) ->
 	lists:delete(ExceptPid,all_player_pids(Game)).
 	
 
