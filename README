@@ -3,6 +3,9 @@ Copyright (c) 2011 by Jesse Gumm
 gumm@sigma-star.com
 
 
+Play at mortimer.spawnfest.com:8000
+
+
 A Pictionary-inspired game written for the Erlang-based Nitrogen Web Framework for the Spawnfest 2011 Competition.
 
 This is using the latest (as of 2011-07-10) version of the Nitrogen Web Framework found on Github (http://github.com/nitrogen)
