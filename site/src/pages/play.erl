@@ -57,7 +57,7 @@ canvas(Playername) ->
 
 	[
 		#panel{id=headermessage,text=["Welcome ",Playername]},
-		"<canvas class=game_canvas width=640 height=480>Get a browser that doesn't suck</canvas>",
+		"<canvas class=game_canvas width=500 height=300>Get a browser that doesn't suck</canvas>",
 		#panel{id=canvascontrols,class=canvascontrols,body=canvascontrols()},
 		#panel{id=chatcontrols,class=chatcontrols,body=chatcontrols()},
 		#br{},
@@ -187,6 +187,8 @@ game_loop(GamePid) ->
 			in_timer_update(SecondsLeft);
 		{get_ready,Player} ->
 			in_get_ready(Player);
+		{game_over} ->
+			in_game_over();
 		{from_page,Fun} ->
 			Fun(GamePid)
 	after 5000 ->
@@ -247,6 +249,12 @@ in_round_over(Word) ->
 
 in_timer_update(SecondsLeft) ->
 	wf:wire("timer_update(" ++ wf:to_list(SecondsLeft) ++ ");").
+
+
+in_game_over() ->
+	wf:update(headermessage,"Game Over"),
+	wf:wire("game_over()"),
+	wf:update(clock,ready_button()).
 
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me

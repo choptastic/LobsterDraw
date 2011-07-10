@@ -5,4 +5,6 @@
               {applications,[kernel,stdlib]},
               {mod,{nitrogen_app,[]}},
               {env,[]},
-              {modules,[index,nitrogen_app,nitrogen_mochiweb,nitrogen_sup]}]}.
+              {modules,[game,game_master,game_server,game_sup,index,
+                        nitrogen_app,nitrogen_mochiweb,nitrogen_sup,pl,play,
+                        player,word_server]}]}.
