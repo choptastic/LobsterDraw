@@ -4,8 +4,7 @@
 -behaviour(gen_server).
 -export([start/2,start_link/2,stop/0,init/1,handle_call/3,terminate/2]).
 -export([join/2,queue/2,leave/1,guess/2,ready/1,unready/1,title/1,name/1]).
--export([new_round/1,round_over/1]).
-
+-export([new_round/1,round_over/1,is_going/1,verify_players_connected/1,i_am_here/1,remove_disconnected/1]).
 
 
 start(ID,Name) ->
@@ -272,7 +271,7 @@ handle_call(round_over,_From,Game) ->
 
 handle_call(verify_players_connected,_From,Game) ->
 	to_all_players(Game,{are_you_there}),
-	{reply,ok,NewGame};
+	{reply,ok,Game};
 
 handle_call(i_am_here,{FromPid,_},Game) ->
 	Player = pl:get(Game#game.players,FromPid),
@@ -288,17 +287,42 @@ handle_call(i_am_here,{FromPid,_},Game) ->
 handle_call(remove_disconnected,_From,Game) ->
 	Players = Game#game.players,
 	Now = now(),
-	lists:filter(fun(P) ->
+
+	%% Lets find all the pids of players that haven't responded in a while
+	PidsToDelete = lists:map(fun({Pid,P}) ->
 		Diff = timer:now_diff(Now,P#player.i_am_here),
 		Secs = Diff / 1000000,
 		if
 			%% It has responded less than 10 seconds ago, still here
-			Secs =< 10 -> true;
+			Secs =< 10 -> undefined;
 
 			% It has not responded less than 10 seconds ago, Boot him
-			Secs > 10 -> false
+			Secs > 10 -> 
+				%% Tell everyone this one is going away
+				to_all_players(Game,{leave,P#player.name}),
+				Pid
 		end
-	end,Players).
+	end,Players),
+
+	%% remove the latent "undefineds" from the previously gotten list
+	PidsFiltered =  lists:filter(fun(Pid) ->
+		case Pid of
+			undefined -> false;
+			_ -> true
+		end
+	end,PidsToDelete),
+
+	%% Remove the pids from the drawing_pids list
+	NewDrawingPids = Game#game.drawing_pids -- PidsFiltered,
+
+	%% Remove all players and send notifications to the others
+	NewPlayers = pl:delete(Game#game.players,PidsFiltered),
+
+	NewGame = Game#game{
+		players = NewPlayers,
+		drawing_pids = NewDrawingPids
+	},
+	{reply,ok,NewGame};
 
 
 handle_call(Msg,_,Game) ->
@@ -377,10 +401,18 @@ new_round(Pid) ->
 is_going(Pid) ->
 	game_call(Pid,is_going).	
 
-
-
 round_over(Pid) ->
 	game_call(Pid,round_over).
+
+
+verify_players_connected(Pid) ->
+	game_call(Pid,verify_players_connected).
+
+remove_disconnected(Pid) ->
+	game_call(Pid,remove_disconnected).
+
+i_am_here(Pid) ->
+	game_call(Pid,i_am_here).
 
 %% Private functions
 

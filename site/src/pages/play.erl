@@ -32,6 +32,7 @@ main_interaction() ->
 	%% initialize the api
 	wf:wire(#api{name=pict_api,tag=unused}),
 	wf:wire(#api{name=leave,tag=unused}),
+	wf:wire(#api{name=i_am_here,tag=unused}),
 
 	case player:name() of
 		Undef when Undef==undefined;Undef=="" ->
@@ -176,6 +177,9 @@ event(_) ->
 	ok.
 
 
+api_event(i_am_here,_,[]) ->
+	send_to_comet(fun(GamePid) -> game_server:i_am_here(GamePid) end);
+
 api_event(leave,_,[]) ->
 	send_to_comet(fun(GamePid) -> game_server:leave(GamePid) end);
 
@@ -238,6 +242,8 @@ game_loop(GamePid) ->
 			in_get_ready(Player);
 		{game_over} ->
 			in_game_over();
+		{are_you_there} ->
+			in_are_you_there();
 
 		{from_page,Fun} ->
 			Fun(GamePid)
@@ -312,6 +318,11 @@ in_game_over() ->
 	wf:wire("game_over()"),
 	wf:update(clock,ready_button()).
 
+in_are_you_there() ->
+	%% We call i_am_here() from are_you_there()
+	%% If the javascript is running, it'll respond accordingly
+	wf:wire("page.i_am_here()").
+
 catch_me_up() ->
 	[].
 
@@ -331,5 +342,5 @@ encode_queue_item(AS) when is_atom(AS);is_list(AS) ->
 	"\"" ++ wf:to_list(AS) ++ "\"";
 encode_queue_item(F) when is_float(F) ->
 	encode_queue_item(round(F));
-encode_queue_item(Other) ->
+encode_queue_item(_Other) ->
 	"null".
