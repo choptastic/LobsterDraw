@@ -44,3 +44,6 @@ delete(PL,[Key|RestKeys]) when is_list(PL) ->
 delete(PL,Key) when is_list(PL) ->
 	[{K,V} || {K,V} <- PL,K /= Key].
 
+%% map for proplists, just a syntactical suger for an otherwise easy to do thing
+map(PL,Fun) ->
+        [{Key,Fun(Val)} || {Key,Val} <- PL].

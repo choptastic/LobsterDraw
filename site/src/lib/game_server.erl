@@ -47,7 +47,10 @@ handle_call({join,Playername},{FromPid,_},Game) ->
 
 	%% Let's add the new player to the roster
 	NewGame = Game#game{
-		players=[{FromPid,Player} | Game#game.players]
+		players=[{FromPid,Player} | Game#game.players],
+
+		%% Make the newly joined player wait until the end to draw
+		drawing_pids = Game#game.drawing_pids ++ [FromPid] 
 	},
 
 	%% Tell all the other players someone has joined
@@ -63,7 +66,8 @@ handle_call(leave,{FromPid,_},Game) ->
 
 	%% then we'll remove him from the list of players
 	NewGame = Game#game{
-		players=pl:delete(Game#game.players,FromPid)
+		players=pl:delete(Game#game.players,FromPid),
+		drawing_pids = lists:delete(FromPid,Game#game.drawing_pids)
 	},
 
 
@@ -164,7 +168,13 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 			%% When the words run out, we'll be done with this game
 			StartGame = NewGame#game{
 				words=word_server:get(10),
-				going=true
+				going=true,
+				players=pl:map(NewGame#game.players,fun(P) ->
+						P#player{
+							ready=false
+						}
+					end)
+				
 			},
 			
 			%% Let all players know we're about to start the game
@@ -183,7 +193,8 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 handle_call(new_round,_From,Game) ->
 
 	%% Let's get the player that's next to draw
-	[{NextPid,NextPlayer} | Players] = Game#game.players,
+	[NextPid | DrawingPids] = Game#game.drawing_pids,
+	NextPlayer = pl:get(Game#game.players,NextPid),
 
 	%% And the new word
 	[Word | Remaining] = Game#game.words,
@@ -195,7 +206,7 @@ handle_call(new_round,_From,Game) ->
 	to_all_players_except(Game,NextPid,{new_round,NextPlayer#player.name}),
 
 	%% Let's put that player now to the back of the list so we doesn't draw again immediately
-	NewPlayers = Players ++ [{NextPid,NextPlayer}],
+	NewDrawingPids = DrawingPids ++ [NextPid],
 
 	%% Now we'll make a timer that'll signal the end of the round
 	%% We want to track the timer ref in case everyone gets it right
@@ -204,9 +215,9 @@ handle_call(new_round,_From,Game) ->
 
 	%% Let's store all these exciting new changes in the new Game record
 	NewGame = Game#game{
-		players=NewPlayers,
 		words=Remaining,
 		drawing_pid = NextPid,
+		drawing_pids = NewDrawingPids,
 		word=Word,
 		timer_refs = [Tref]
 	},
@@ -336,7 +347,10 @@ should_we_start(Game) ->
 %% Let everyone know who's drawing next
 %% then in 5 seconds start the round officially
 get_ready(Game) ->
-	{NextPid,NextPlayer} = hd(Game#game.players),
+
+	NextPid = hd(Game#game.drawing_pids),
+	NextPlayer = pl:get(Game#game.players,NextPid),
+
 	Playername = NextPlayer#player.name,
 	to_all_players(Game,{get_ready,Playername}),
 	timer:apply_after(5000,?MODULE,new_round,[self()]).

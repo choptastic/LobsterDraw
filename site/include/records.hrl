@@ -7,6 +7,7 @@
 	name="",
 	lines=[],
 	drawing_pid=undefined,
+	drawing_pids=[],
 	timer_refs=[],
 	going=false
 }).
