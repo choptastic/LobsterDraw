@@ -13,7 +13,13 @@ It includes a copy of erts 5.8.4 and uses mochiweb as it's webserver.
 
 The only really interesting part (where the code goes) is in site/
 
-There are two pages: /index and /play
+The web page code are found in site/pages
+
+Anmy behind-the-scenes code (gen_servers and processing stuff) are found in site/lib
+
+There is a word list found at ./site/words.txt
+
+Feel free to change that word list.  Right now, it's just a handful of words I found on a quick google search for "pictionary words"
 
 
 
