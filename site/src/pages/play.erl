@@ -56,16 +56,15 @@ canvas(Playername) ->
 	{ok,CometPid} = wf:comet(fun() -> game_join(Playername) end),
 	wf:state(cometpid,CometPid),
 
+	case game_server:is_going(id()) of
+		true -> catch_me_up();
+		false -> wf:wire("enable_drawing()")
+	end,
+
 	[
 		#panel{id=headermessage,class=headermessage,text=["Welcome ",Playername]},
 		"<canvas class=game_canvas width=500 height=300>Get a browser that doesn't suck</canvas>",
-		#panel{id=canvascontrols,class=canvascontrols,body=canvascontrols()},
-		#panel{id=chatcontrols,class=chatcontrols,body=chatcontrols()},
-		#br{},
-
-
-		"<script>enable_drawing()</script>",
-		#button{text="Erase",postback=erase}
+		#panel{id=controls,class=chatcontrols,body=canvascontrols()}
 	].
 	
 
@@ -99,14 +98,54 @@ clock() ->
 		ready_button()
 	]}.
 
+color_button(Color) ->
+	Pixel = #image{image="/images/px.gif",style="background:" ++ Color},
+	#link{class=color_button,body=Pixel,actions=[
+		#event{type=click,actions=[
+			#script{script="setcolor(\"" ++ Color ++ "\")"}
+		]}
+	]}.
+
+color_row(Row) ->
+	#panel{class=color_row,body=[color_button(Color) || Color <- Row]}.
+
+
+%% Make a color picker based on the cartesian product of 0,8,f, amounting to enough color combos, ie #000, #8f0, #ff8, etc
+colorpicker() ->
+	Ranges = sofs:set("08f"),
+	Prod = sofs:product({Ranges,Ranges,Ranges}),
+	Tuples = sofs:to_external(Prod),
+	Colors = ["#" ++ tuple_to_list(T) || T<-Tuples],
+	Top = lists:sublist(Colors,1,9),
+	Mid = lists:sublist(Colors,10,9),
+	Bot = lists:sublist(Colors,19,9),
+
+	[color_row(Top),color_row(Mid),color_row(Bot)].
+
+erase_button() ->
+	#button{text="Erase Canvas",actions=[
+		#event{type=click,actions=[
+			#script{script="queue_erase()"}
+		]}
+	]}.
+
+
 
 canvascontrols() ->
-	[].
+	#singlerow{class=canvascontrols,cells=[
+		#tablecell{body=colorpicker()},
+		#tablecell{class=erase_button,body=erase_button()}
+	]}.
+
 
 chatcontrols() ->
 	[
-		#textbox{class=guess,id=guess,text="",postback=guess}
+		#textbox{class=[guess,game_up],id=guess,text="",postback=guess}
 	].
+
+
+you_got_it(Word) ->
+	#panel{class=you_got_it,text="You got it! The word was " ++ Word}.
 
 
 activitylog() ->
@@ -191,12 +230,15 @@ game_loop(GamePid) ->
 			in_game_starting();
 		{you_are_up,Word} ->
 			in_you_are_up(Word);
+		{you_got_it,Word} ->
+			in_you_got_it(Word);
 		{timer_update,SecondsLeft} ->
 			in_timer_update(SecondsLeft);
 		{get_ready,Player} ->
 			in_get_ready(Player);
 		{game_over} ->
 			in_game_over();
+
 		{from_page,Fun} ->
 			Fun(GamePid)
 	after 5000 ->
@@ -219,6 +261,9 @@ in_leave(Player) ->
 in_correct(Player,Points) ->
 	add_message(log_correct,Player ++ " got it for " ++ wf:to_list(Points) ++ " points"),
 	update_playerlist().
+
+in_you_got_it(Word) ->
+	wf:update(controls,you_got_it(Word)).
 
 in_ready(Player) ->
 	add_message(log_ready,Player ++ " is ready to start"),
@@ -244,11 +289,14 @@ in_get_ready(Player) ->
 
 in_you_are_up(Word) ->
 	wf:update(headermessage,"It's your turn to draw. Your word: " ++ Word),
+	wf:update(controls,canvascontrols()),
 	wf:wire("start_round();"),
 	wf:wire("enable_drawing();").
 
 in_new_round(Player) ->
 	wf:update(headermessage,"It's " ++ Player ++ "'s turn to draw"),
+	wf:update(controls,chatcontrols()),
+	wf:wire("disable_drawing();"),
 	wf:wire("start_round();").
 
 in_round_over(Word) ->
@@ -264,6 +312,8 @@ in_game_over() ->
 	wf:wire("game_over()"),
 	wf:update(clock,ready_button()).
 
+catch_me_up() ->
+	[].
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me
 encode_queue(ActionList) ->
@@ -279,5 +329,7 @@ encode_queue_item(N) when is_integer(N) ->
 	wf:to_list(N);
 encode_queue_item(AS) when is_atom(AS);is_list(AS) ->
 	"\"" ++ wf:to_list(AS) ++ "\"";
-encode_queue_item(_) ->
+encode_queue_item(F) when is_float(F) ->
+	encode_queue_item(round(F));
+encode_queue_item(Other) ->
 	"null".

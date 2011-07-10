@@ -106,6 +106,14 @@ function erase()
 	c.restore();
 }
 
+//We're clearing the input a few seconds after submission so that we don't submit empty text
+function clear_input()
+{
+	setTimeout(function(){
+		$("input[type=text].guess").va("").focus();
+	},50);
+}
+
 function queue_erase()
 {
 	erase();
@@ -117,7 +125,10 @@ function get_coords(e)
 	var offset = $(".game_canvas").offset();
 	var x = e.pageX - offset.left;
 	var y = e.pageY - offset.top;
-	return {x:x,y:y}
+	return {
+		x:parseInt(x),
+		y:parseInt(y)
+	}
 }
 
 function enable_drawing() 

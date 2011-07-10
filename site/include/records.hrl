@@ -9,6 +9,7 @@
 	drawing_pid=undefined,
 	drawing_pids=[],
 	timer_refs=[],
+	verify_tref=undefined,
 	going=false
 }).
 
@@ -17,5 +18,6 @@
 	name="guest",
 	score=0,
 	ready=false,
-	correct=false
+	correct=false,
+	i_am_here=undefined
 }).

@@ -15,10 +15,18 @@ start_link(ID,Name) ->
 	gen_server:start_link(?MODULE, {ID,Name}, []).
 
 init({ID,Name}) ->
+	
+	%% for as long as this particular game exists
+	%% we will be pinging all players every 5 seconds to make sure they're still there
+	%% We can't trust javascript to send the proper leave messages
+	%% but we can trust that if the page's javascript doesn't respond, that the player isn't here
+	{ok,Tref} = timer:apply_interval(5000,?MODULE,verify_players_connected,[self()]),
+
 	GameRec = #game{
 		name=Name,
 		pid=self(),
-		id=ID
+		id=ID,
+		verify_tref=Tref
 	},
 	{ok, GameRec}.
 
@@ -31,8 +39,13 @@ terminate(Reason,_State) ->
 handle_call(stop,_From,Game) ->
 	{stop,ok,Game};
 
+%% Someone asked us the title (name) of this game
 handle_call(title,_From,Game) ->
 	{reply,Game#game.name,Game};
+
+%% someone asked us if the game is currently going (ie: enough people have readied up)
+handle_call(is_going,_From,Game) ->
+	{reply,Game#game.going,Game};
 
 %% A player has joined the game
 handle_call({join,Playername},{FromPid,_},Game) ->
@@ -42,7 +55,8 @@ handle_call({join,Playername},{FromPid,_},Game) ->
 		name=Playername,
 		pid=FromPid,
 		score=0,
-		ready=false
+		ready=false,
+		i_am_here=now()
 	},
 
 	%% Let's add the new player to the roster
@@ -256,6 +270,36 @@ handle_call(round_over,_From,Game) ->
 			{reply,ok,NewGame}
 	end;
 
+handle_call(verify_players_connected,_From,Game) ->
+	to_all_players(Game,{are_you_there}),
+	{reply,ok,NewGame};
+
+handle_call(i_am_here,{FromPid,_},Game) ->
+	Player = pl:get(Game#game.players,FromPid),
+	NewPlayer = Player#player{
+		i_am_here=now()
+	},
+	NewGame = Game#game{
+		players = pl:set(Game#game.players,FromPid,NewPlayer)
+	},
+	{reply,ok,NewGame};
+
+
+handle_call(remove_disconnected,_From,Game) ->
+	Players = Game#game.players,
+	Now = now(),
+	lists:filter(fun(P) ->
+		Diff = timer:now_diff(Now,P#player.i_am_here),
+		Secs = Diff / 1000000,
+		if
+			%% It has responded less than 10 seconds ago, still here
+			Secs =< 10 -> true;
+
+			% It has not responded less than 10 seconds ago, Boot him
+			Secs > 10 -> false
+		end
+	end,Players).
+
 
 handle_call(Msg,_,Game) ->
 	{reply,{error,unexpected_msg,Msg},Game}.
@@ -328,8 +372,11 @@ name(Pid) ->
 	title(Pid).
 
 new_round(Pid) ->
-	?PRINT({new_round,Pid}),
 	game_call(Pid,new_round).
+
+is_going(Pid) ->
+	game_call(Pid,is_going).	
+
 
 
 round_over(Pid) ->
