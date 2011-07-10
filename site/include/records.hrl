@@ -11,6 +11,7 @@
 	timer_refs=[],
 	verify_tref=undefined,
 	going=false,
+	points=10,
 	round_started=undefined
 }).
 

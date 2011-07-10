@@ -123,19 +123,34 @@ handle_call({guess,Text},{FromPid,_},Game) ->
 			case NewG of
 				Target -> 
 
+					%% Point Val = G
+					Points = Game#game.points,
+
 					%% Tell everyone who got the current answer and for how many points
-					to_all_players(Game,{correct,Player#player.name,10}),
+					to_all_players(Game,{correct,Player#player.name,Points}),
 
 					%% Tell the player he got it and the word
 					to_player(FromPid,{you_got_it,Game#game.word}),
 
 					%% Update the player list to reflect the new score
 					NewPlayer = Player#player{
-						score=Player#player.score + 10,
+						score=Player#player.score + Points,
 						correct=true
 					},
+
+
+					Drawer = pl:get(Game#game.players,Game#game.drawing_pid),
+					NewDrawer = Drawer#player{
+						score = Drawer#player.score + 5
+					},
+
+					%% Let's update the game with the new point val
 					NewGame = Game#game{
-						players=pl:set(Game#game.players,FromPid,NewPlayer)
+						players=pl:set(Game#game.players,[
+							{FromPid,NewPlayer},
+							{Game#game.drawing_pid,NewDrawer}
+						]),
+						points = if Points > 1 -> Points -1; true -> 1 end
 					},
 
 					{reply,ok,NewGame};
@@ -209,7 +224,8 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 				going=true,
 				players=pl:map(NewGame#game.players,fun(P) ->
 						P#player{
-							ready=false
+							ready=false,
+							score=0
 						}
 					end)
 				
@@ -260,6 +276,7 @@ handle_call(new_round,_From,Game) ->
 	%% Let's store all these exciting new changes in the new Game record
 	NewGame = Game#game{
 		round_started = now(),
+		points=10,	%%$ reset point default to 10
 		words=Remaining,
 		drawing_pid = NextPid,
 		drawing_pids = NewDrawingPids,
