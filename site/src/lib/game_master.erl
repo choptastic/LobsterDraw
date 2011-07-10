@@ -60,7 +60,6 @@ get_pid(ID) ->
 
 exists(ID) ->
 	Pid = get_pid(ID),
-	?PRINT(Pid),
 	is_pid(Pid).
 
 

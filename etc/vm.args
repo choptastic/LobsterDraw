@@ -27,3 +27,7 @@
 
 ## Run code at startup.
 -eval "application:start(nitrogen)"
+
+-eval "game_master:start()"
+
+-eval "word_server:start()"

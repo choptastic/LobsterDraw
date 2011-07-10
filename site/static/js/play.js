@@ -4,6 +4,8 @@ var _drawing = false;
 var _lastcoords = null;
 var _out_queue = [];
 var _queue_timer = null;
+var _game_timer = null;
+var _secondsleft = 0;
 
 function get_context()
 {
@@ -146,7 +148,13 @@ function disable_drawing()
 
 function timer_update(secs)
 {
-	_secondsleft = secs;
+	$(".clock").text(secs);
+
+	if(_game_timer)
+		clearTimeout(_game_timer);
+	var next_time = secs-1;
+	if(next_time >=0)
+		_game_timer = setTimeout(function(){timer_update(next_time)},1000);
 }
 
 function round_over()
@@ -154,3 +162,12 @@ function round_over()
 	disable_drawing();
 }
 
+function start_round()
+{
+	erase();
+	timer_update(60);
+}
+
+$("body").unload(function(){
+	page.leave();
+});

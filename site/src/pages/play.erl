@@ -31,6 +31,7 @@ title() ->
 main_interaction() ->
 	%% initialize the api
 	wf:wire(#api{name=pict_api,tag=unused}),
+	wf:wire(#api{name=leave,tag=unused}),
 
 	case player:name() of
 		Undef when Undef==undefined;Undef=="" ->
@@ -127,8 +128,13 @@ event(erase) ->
 event(_) -> 
 	ok.
 
+
+api_event(leave,_,[]) ->
+	send_to_comet(fun(GamePid) -> game_server:leave(GamePid) end);
+
 api_event(pict_api,_,[ActionList]) ->
 	send_to_comet(fun(GamePid) -> game_server:queue(GamePid,ActionList) end).
+
 
 
 
@@ -152,7 +158,7 @@ game_loop(GamePid) ->
 	process_flag(trap_exit,true),
 
 	receive 
-		{'EXIT',_,Message} ->
+		{'EXIT',_,_Message} ->
 			game_server:leave(GamePid),
 			exit(done);
 		{join,Player} ->
@@ -171,8 +177,10 @@ game_loop(GamePid) ->
 			in_queue(ActionList);
 		{new_round,Player} ->
 			in_new_round(Player);
-		{round_over} ->
-			in_round_over();
+		{round_over,Word} ->
+			in_round_over(Word);
+		{game_starting} ->
+			in_game_starting();
 		{you_are_up,Word} ->
 			in_you_are_up(Word);
 		{timer_update,SecondsLeft} ->
@@ -217,24 +225,28 @@ in_queue(Queue) ->
 	NewQueue = encode_queue(Queue),
 	wf:wire("load_queue(" ++ NewQueue ++ ");").
 
+in_game_starting() ->
+	add_message(log_starting,"The Game is about to start.  ").
+
 in_get_ready(Player) ->
-	wf:update(headermessage,"The Game is about to start.  It will be " ++ Player ++ "'s turn to draw"),
-	add_message(log_ready,"The game is about to start. Get Ready"),
+	wf:update(headermessage,"It will be " ++ Player ++ "'s turn to draw!"),
 	wf:update(clock,"&#8734;").
 
 in_you_are_up(Word) ->
 	wf:update(headermessage,"It's your turn to draw. Your word: " ++ Word),
-	wf:wire("enable_drawing()").
+	wf:wire("start_round();"),
+	wf:wire("enable_drawing();").
 
 in_new_round(Player) ->
 	wf:update(headermessage,"It's " ++ Player ++ "'s turn to draw"),
-	wf:wire("start_round()").
+	wf:wire("start_round();").
 
-in_round_over() ->
-	wf:wire("round_over()").
+in_round_over(Word) ->
+	wf:wire("round_over()"),
+	add_message(log_round_over,"Round Over. The word was " ++ Word).
 
 in_timer_update(SecondsLeft) ->
-	wf:wire("timer_update(" ++ wf:to_list(SecondsLeft) ++ ")").
+	wf:wire("timer_update(" ++ wf:to_list(SecondsLeft) ++ ");").
 
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me

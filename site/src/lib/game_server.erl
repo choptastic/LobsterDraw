@@ -4,6 +4,7 @@
 -behaviour(gen_server).
 -export([start/2,start_link/2,stop/0,init/1,handle_call/3,terminate/2]).
 -export([join/2,queue/2,leave/1,guess/2,ready/1,unready/1,title/1,name/1]).
+-export([new_round/1,round_over/1]).
 
 
 
@@ -102,16 +103,13 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 		true ->
 			StartGame = NewGame#game{
 				words=word_server:get(20),
-				going=true,
-
+				going=true
 			},
 			
-			{_,NextPlayer} = hd(NewGame#game.players),
-			Playername = NextPlayer#player.name,
 
-			to_all_players(NewGame,{get_ready,Playername}),
+			to_all_players(NewGame,{game_starting}),
 
-			timer:apply_after(5000,?MODULE,new_round,[self()]),
+			get_ready(NewGame),
 
 			{reply,ok,StartGame};
 		false ->
@@ -120,15 +118,15 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 
 
 handle_call(new_round,_From,Game) ->
-	[{NextPid,NextPlayer} | Players] = Game#players,
-	[Word | Remaining] = Game#words,
+	[{NextPid,NextPlayer} | Players] = Game#game.players,
+	[Word | Remaining] = Game#game.words,
 
 	to_player(NextPid,{you_are_up,Word}),
 	to_all_players_except(Game,NextPid,{new_round,NextPlayer#player.name}),
 
 	NewPlayers = Players ++ [{NextPid,NextPlayer}],
 
-	{ok,Tref} = timer:apply_after(60000,?MODULE,time_up,[]),
+	{ok,Tref} = timer:apply_after(60000,?MODULE,round_over,[self()]),
 
 	NewGame = Game#game{
 		players=NewPlayers,
@@ -140,12 +138,23 @@ handle_call(new_round,_From,Game) ->
 
 	{reply,ok,NewGame};
 
-handle_call(time_up,_From,Game) ->
-	to_all_players(Game,{time_up,Game#game.word}),
+handle_call(round_over,_From,Game) ->
+	to_all_players(Game,{round_over,Game#game.word}),
 	NewGame = Game#game{
 		drawing_pid=undefined
 	},
-	{reply,ok,NewGame};
+	
+	case length(Game#game.words) of
+		0 -> 
+			to_all_players(Game,{game_over}),
+			NewGame2 = NewGame#game{
+				going=false
+			},
+			{reply,ok,NewGame2};
+		_ -> 
+			get_ready(NewGame),
+			{reply,ok,NewGame}
+	end;
 
 
 handle_call(Msg,_,Game) ->
@@ -219,7 +228,12 @@ name(Pid) ->
 	title(Pid).
 
 new_round(Pid) ->
+	?PRINT({new_round,Pid}),
 	game_call(Pid,new_round).
+
+
+round_over(Pid) ->
+	game_call(Pid,round_over).
 
 %% Private functions
 
@@ -227,4 +241,10 @@ should_we_start(Game) ->
 	Total = length(Game#game.players),
 	Ready = length([P || {_,P} <- Game#game.players,P#player.ready==true]),
 	Ready > Total/2.
-	
+
+
+get_ready(Game) ->
+	{NextPid,NextPlayer} = hd(Game#game.players),
+	Playername = NextPlayer#player.name,
+	to_all_players(Game,{get_ready,Playername}),
+	timer:apply_after(5000,?MODULE,new_round,[self()]).
