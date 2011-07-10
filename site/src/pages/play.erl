@@ -325,6 +325,14 @@ in_are_you_there() ->
 	wf:wire("page.i_am_here();").
 
 catch_me_up() ->
+	case game_server:seconds_left(id()) of
+		N when is_integer(N) and N>0 ->
+			wf:wire("timer_update(" ++ wf:to_list(N) ++ ")");
+		_ ->
+			wf:update(clock,"&#8734;")
+	end,
+	wf:wire("disable_drawing()"),
+	wf:wire("start_round()"),
 	[].
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me

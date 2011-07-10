@@ -189,6 +189,11 @@ function start_round()
 	timer_update(60);
 }
 
+function i_am_here()
+{
+	page.i_am_here();
+}
+
 $("body").unload(function(){
 	page.leave();
 });

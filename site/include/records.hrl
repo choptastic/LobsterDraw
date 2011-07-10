@@ -10,7 +10,8 @@
 	drawing_pids=[],
 	timer_refs=[],
 	verify_tref=undefined,
-	going=false
+	going=false,
+	round_started=undefined
 }).
 
 -record(player,{

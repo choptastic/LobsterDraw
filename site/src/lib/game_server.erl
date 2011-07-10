@@ -75,22 +75,26 @@ handle_call({join,Playername},{FromPid,_},Game) ->
 handle_call(leave,{FromPid,_},Game) ->
 	%% Let's get the player's name
 	Player = pl:get(Game#game.players,FromPid),
-	Playername = Player#player.name,
+	case Player of
+		undefined -> {reply,ok,Game};
+		_ ->
+			Playername = Player#player.name,
 
-	%% then we'll remove him from the list of players
-	NewGame = Game#game{
-		players=pl:delete(Game#game.players,FromPid),
-		drawing_pids = lists:delete(FromPid,Game#game.drawing_pids)
-	},
+			%% then we'll remove him from the list of players
+			NewGame = Game#game{
+				players=pl:delete(Game#game.players,FromPid),
+				drawing_pids = lists:delete(FromPid,Game#game.drawing_pids)
+			},
 
 
-	%% Now we tell everyone someone was a lamer and left the game
-	to_all_players(NewGame,{leave,Playername}),
-	case NewGame#game.players of
-		[] ->
-			{stop,no_more_players,Game};
-		_ ->	
-			{reply,ok,NewGame}
+			%% Now we tell everyone someone was a lamer and left the game
+			to_all_players(NewGame,{leave,Playername}),
+			case NewGame#game.players of
+				[] ->
+					{stop,no_more_players,Game};
+				_ ->	
+					{reply,ok,NewGame}
+			end
 	end;
 
 
@@ -145,6 +149,19 @@ handle_call({guess,Text},{FromPid,_},Game) ->
 handle_call(playerlist,_From,Game) ->
 	Players = [P || {_,P} <- Game#game.players],
 	{reply,Players,Game};
+
+
+%% This assumes a static 60-second round timer
+handle_call(seconds_left,_From,Game) ->
+	SecsLeft = case Game#game.round_started of
+		undefined -> 
+			0;
+		Started ->
+			MicS = timer:now_diff(now(),Started),
+			S = MicS/1000000,
+			round(60 - S)
+	end,
+	{reply,SecsLeft,Game};
 
 
 %% The Action (drawing) queue has been sent. Let's retransmit it
@@ -236,6 +253,7 @@ handle_call(new_round,_From,Game) ->
 
 	%% Let's store all these exciting new changes in the new Game record
 	NewGame = Game#game{
+		round_started = now(),
 		words=Remaining,
 		drawing_pid = NextPid,
 		drawing_pids = NewDrawingPids,
@@ -290,7 +308,6 @@ handle_call(i_am_here,{FromPid,_},Game) ->
 		players = pl:set(Game#game.players,FromPid,NewPlayer)
 	},
 	{reply,ok,NewGame};
-
 
 handle_call(remove_disconnected,_From,Game) ->
 	Players = Game#game.players,
@@ -414,13 +431,17 @@ round_over(Pid) ->
 
 
 verify_players_connected(Pid) ->
-	game_call(Pid,verify_players_connected).
+	game_call(Pid,verify_players_connected),
+	remove_disconnected(Pid).
 
 remove_disconnected(Pid) ->
 	game_call(Pid,remove_disconnected).
 
 i_am_here(Pid) ->
 	game_call(Pid,i_am_here).
+
+seconds_left(Pid) ->
+	game_call(Pid,seconds_left).
 
 %% Private functions
 
