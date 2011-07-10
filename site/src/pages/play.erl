@@ -220,11 +220,14 @@ in_timer_update(SecondsLeft) ->
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me
 encode_queue(Queue) ->
-	Q1 = lists:map(fun([Act,Rest]) ->
-		StrRest = case Rest of
-			[] -> "";
-			_ -> "," ++ Rest ++ string:join(",",lists:map(fun wf:to_list/1,Rest))
-		end,
-		"[\"" ++ wf:to_list(Act) ++ "\"" ++ StrRest ++ "]"
+	Q1 = lists:map(fun(Action) ->
+		JSAction = string:join(lists:map(fun encode_queue_item/1,Action),","),
+		"[" ++ JSAction ++ "]"
 	end,Queue),
-	"[" ++ string:join(",",Q1) ++ "]".
+	"[" ++ string:join(Q1,",") ++ "]".
+
+
+encode_queue_item(N) when is_integer(N) ->
+	wf:to_list(N);
+encode_queue_item(AS) when is_atom(AS);is_list(AS) ->
+	"\"" ++ wf:to_list(AS) ++ "\"".
