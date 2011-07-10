@@ -321,7 +321,7 @@ in_game_over() ->
 in_are_you_there() ->
 	%% We call i_am_here() from are_you_there()
 	%% If the javascript is running, it'll respond accordingly
-	wf:wire("page.i_am_here()").
+	wf:wire("page.i_am_here();").
 
 catch_me_up() ->
 	[].
