@@ -140,9 +140,9 @@ canvascontrols() ->
 
 
 chatcontrols() ->
-	[
+	#panel{class=[guess,game_up],body=[
 		#textbox{class=[guess,game_up],id=guess,text="",postback=guess}
-	].
+	]}.
 
 
 you_got_it(Word) ->
@@ -170,7 +170,8 @@ event(unready) ->
 	wf:update(clock,ready_button());
 event(guess) ->
 	Guess = wf:q(guess),
-	send_to_comet(fun(GamePid) -> game_server:guess(GamePid,Guess) end);
+	send_to_comet(fun(GamePid) -> game_server:guess(GamePid,Guess) end),
+	wf:wire("$(obj('guess')).val('').focus();");
 event(erase) ->
 	wf:wire("erase()");
 event(_) -> 

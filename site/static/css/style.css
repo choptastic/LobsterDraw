@@ -79,6 +79,7 @@ table.portal td {
 .joinheader, .makeheader {
 	font-size:14pt;
 	font-weight:bold;
+	line-height:32px;
 }
 
 .gamewrapper {
@@ -168,6 +169,10 @@ table.portal td {
 input[type=text].guess {
 	width:500px;
 	font-size:14pt;
+}
+
+div.guess {
+	width:500px;
 }
 
 .color_button img {

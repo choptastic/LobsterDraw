@@ -86,7 +86,12 @@ handle_call(leave,{FromPid,_},Game) ->
 
 	%% Now we tell everyone someone was a lamer and left the game
 	to_all_players(NewGame,{leave,Playername}),
-	{reply,ok,NewGame};
+	case NewGame#game.players of
+		[] ->
+			{stop,no_more_players,Game};
+		_ ->	
+			{reply,ok,NewGame}
+	end;
 
 
 %% A player has submitted a guess
@@ -116,6 +121,9 @@ handle_call({guess,Text},{FromPid,_},Game) ->
 
 					%% Tell everyone who got the current answer and for how many points
 					to_all_players(Game,{correct,Player#player.name,10}),
+
+					%% Tell the player he got it and the word
+					to_player(FromPid,{you_got_it,Game#game.word}),
 
 					%% Update the player list to reflect the new score
 					NewPlayer = Player#player{
