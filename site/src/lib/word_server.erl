@@ -4,7 +4,8 @@
 -behaviour(gen_server).
 
 start() ->
-	gen_server:start({local,?MODULE},?MODULE, [], []).
+	gen_server:start({local,?MODULE},?MODULE, [], []),
+	load("./site/words.txt").
 
 start_link() ->
 	gen_server:start_link({local,?MODULE},?MODULE, [], []).

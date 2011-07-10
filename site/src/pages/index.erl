@@ -6,7 +6,7 @@
 
 main() -> #template { file="./site/templates/bare.html" }.
 
-title() -> "Spawnfest Pictionary".
+title() -> "Spawnfest Drawing Guessing Game Like Pictionary".
 
 game_list() ->
 	Games = game_master:list(),
