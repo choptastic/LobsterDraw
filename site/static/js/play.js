@@ -2,7 +2,7 @@ var _color = "#000";
 var _width = 3;
 var _drawing = false;
 var _lastcoords = null;
-var _queue = [];
+var _out_queue = [];
 var _queue_timer = null;
 
 function get_context()
@@ -16,11 +16,11 @@ function get_context()
 	}
 }
 
-function draw_queue()
+function load_queue(_in_queue)
 {
-	for(i=0;i<_queue.length;i++)
+	for(i=0;i<_in_queue.length;i++)
 	{
-		var action = _queue[i];
+		var action = _in_queue[i];
 		switch(action[0])
 		{
 			case "line":
@@ -34,14 +34,15 @@ function draw_queue()
 				break;
 		}
 	}
-	_queue = [];
+	_in_queue = [];
 }
+
 
 
 function send_queue()
 {
-	var to_send = _queue;
-	_queue = [];
+	var to_send = _out_queue;
+	_out_queue = [];
 
 	for(i=0;i<to_send.length;i++)
 	{
@@ -50,6 +51,8 @@ function send_queue()
 	if(to_send.length>0)
 		page.pict_api(to_send);
 }
+
+
 		
 
 function line(color,width,x1,y1,x2,y2)
@@ -67,7 +70,7 @@ function line(color,width,x1,y1,x2,y2)
 function queue_line(x1,y1,x2,y2)
 {
 	line(_color,_width,x1,y1,x2,y2);
-	_queue.push(["line",_color,_width,x1,y1,x2,y2]);
+	_out_queue.push(["line",_color,_width,x1,y1,x2,y2]);
 }
 
 function fill(color,x,y)
@@ -82,7 +85,7 @@ function fill(color,x,y)
 function queue_fill(x,y)
 {
 	fill(_color,x,y);
-	_queue.push(["fill",_color,x,y]);
+	_out_queue.push(["fill",_color,x,y]);
 }
 
 function erase()
@@ -96,7 +99,7 @@ function erase()
 function queue_erase()
 {
 	erase();
-	_queue.push(["erase"]);
+	_out_queue.push(["erase"]);
 }
 
 function get_coords(e)

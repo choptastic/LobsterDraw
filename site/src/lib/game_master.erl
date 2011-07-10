@@ -33,7 +33,6 @@ handle_call({new,Name},From,Games) ->
 	{reply,ID,[{ID,Pid,Name} | Games]};
 
 handle_call({get_pid,ID},From,Games) ->
-	?PRINT({checking_pid,ID}),
 	%% Don't need to specify a conditional because ID will match
 	Pids = [Pid || {GameID,Pid,_} <- Games,GameID==ID],
 

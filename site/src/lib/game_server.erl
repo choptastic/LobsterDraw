@@ -41,13 +41,18 @@ handle_call({join,Playername},{FromPid,_},Game) ->
 	NewGame = Game#game{
 		players=[{FromPid,Player} | Game#game.players]
 	},
+	to_all_players(NewGame,{join,Playername}),
 	{reply,ok,NewGame};
 
 handle_call(leave,{FromPid,_},Game) ->
-	?PRINT({leave,FromPid}),
+	Player = pl:get(Game#game.players,FromPid),
+	Playername = Player#player.name,
+
 	NewGame = Game#game{
 		players=pl:delete(Game#game.players,FromPid)
 	},
+
+	to_all_players(NewGame,{leave,Playername}),
 	{reply,ok,NewGame};
 
 handle_call({guess,Text},{FromPid,_},Game) ->
@@ -83,6 +88,16 @@ handle_call({ready,TF},{FromPid,_},Game) ->
 	NewGame = Game#game{
 		players=pl:set(Game#game.players,FromPid,NewPlayer)
 	},
+	
+	Msg = case TF of
+		true ->
+			{ready,Player#player.name};
+		false ->
+			{unready,Player#player.name}
+	end,
+
+	to_all_players(NewGame,Msg),
+
 	{reply,ok,NewGame};
 
 handle_call(next_round,_From,Game) ->

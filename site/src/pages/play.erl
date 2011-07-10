@@ -13,7 +13,6 @@ main() ->
 	end.
 
 id() ->	
-	?PRINT(wf:state(gameid)),
 	case wf:state(gameid) of
 		undefined ->
 			case string:to_integer(wf:path_info()) of
@@ -117,7 +116,7 @@ event(erase) ->
 event(_) -> 
 	ok.
 
-api_event(pict_api,_,ActionList) ->
+api_event(pict_api,_,[ActionList]) ->
 	send_to_comet(fun(GamePid) -> game_server:queue(GamePid,ActionList) end).
 
 
@@ -169,6 +168,8 @@ game_loop(GamePid) ->
 			in_timer_update(SecondsLeft);
 		{from_page,Fun} ->
 			Fun(GamePid)
+	after 5000 ->
+			continue
 	end,
 	wf:flush(),
 	game_loop(GamePid).
@@ -201,7 +202,7 @@ in_all_correct() ->
 
 in_queue(Queue) ->
 	NewQueue = encode_queue(Queue),
-	wf:wire("load_queue(" ++ NewQueue ++ ")").
+	wf:wire("load_queue(" ++ NewQueue ++ ");").
 
 in_you_are_up(Word) ->
 	wf:update(headermessage,"It's your turn to draw. Your word: " ++ Word),
@@ -219,11 +220,12 @@ in_timer_update(SecondsLeft) ->
 
 
 %% I use a bunch of ++'s here. I know it's slow, so sue me
-encode_queue(Queue) ->
+encode_queue(ActionList) ->
 	Q1 = lists:map(fun(Action) ->
-		JSAction = string:join(lists:map(fun encode_queue_item/1,Action),","),
+		EncodedArgs = lists:map(fun encode_queue_item/1,Action),
+		JSAction = string:join(EncodedArgs,","),
 		"[" ++ JSAction ++ "]"
-	end,Queue),
+	end,ActionList),
 	"[" ++ string:join(Q1,",") ++ "]".
 
 
