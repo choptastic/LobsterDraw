@@ -1,9 +1,7 @@
 Copyright (c) 2011 by Jesse Gumm
+MIT-License
 @jessegumm
-gumm@sigma-star.com
-
-
-Play at mortimer.spawnfest.com:8000
+http://sigma-star.com/page/jesse
 
 
 A Pictionary-inspired game written for the Erlang-based Nitrogen Web Framework for the Spawnfest 2011 Competition.
@@ -25,7 +23,3 @@ There is a word list found at ./site/words.txt
 Feel free to change that word list.  Right now, it's just a handful of words I found on a quick google search for "pictionary words"
 
 THIS WAS NOT TESTED IN ANY VERSION OF INTERNET EXPLORER
-
-
-
-I haven't picked a license for it yet
