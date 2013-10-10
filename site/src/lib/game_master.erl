@@ -3,7 +3,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -behaviour(gen_server).
 -export([start/0,start_link/0,stop/0,init/1,handle_call/3,terminate/2]).
--export([list/0,new/1,get_pid/1]).
+-export([list/0,new/1,get_pid/1,exists/1]).
 
 start() ->
 	gen_server:start({local,?MODULE},?MODULE, [], []).

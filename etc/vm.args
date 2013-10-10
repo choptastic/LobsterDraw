@@ -25,3 +25,4 @@
 -eval "game_master:start()"
 
 -eval "word_server:start()"
+-setcookie 9yV2WymTkV8HECfn39tIwYdBfeEM9GzfyBIebqztJIJVG7CZCzGOpfZcRqsZUmx

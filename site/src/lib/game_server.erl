@@ -3,7 +3,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -behaviour(gen_server).
 -export([start/2,start_link/2,stop/0,init/1,handle_call/3,terminate/2]).
--export([join/2,queue/2,leave/1,guess/2,ready/1,unready/1,title/1,name/1]).
+-export([join/2,queue/2,leave/1,guess/2,ready/1,unready/1,title/1,name/1,exists/1,playerlist/1,seconds_left/1]).
 -export([new_round/1,round_over/1,is_going/1,verify_players_connected/1,i_am_here/1,remove_disconnected/1]).
 
 

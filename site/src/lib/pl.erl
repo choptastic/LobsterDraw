@@ -6,7 +6,8 @@
 
 -export([set/2,set/3,
 	get/2,get/3,
-	delete/2]).
+	delete/2,
+	map/2]).
 
 % Can set with set(Proplist,Key,Val) or Set(PropList,{Key,Val}) or Set(Proplist,[{Key,Val},{Key,Val}])
 % retrieve values with get(Proplist,Key) or get(Proplist,Key,IfNotFound)
