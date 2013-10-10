@@ -1,9 +1,6 @@
 
-## Name of the riak node
--name nitrogen@127.0.0.1
-
-## Cookie for distributed erlang
--setcookie nitrogen
+## Name of the nitrogen node
+-name lobsterdraw@127.0.0.1
 
 ## Heartbeat management; auto-restarts VM if it dies or becomes unresponsive
 ## (Disabled by default..use with caution!)
@@ -21,9 +18,6 @@
 
 ## Include .beam files for site.
 -pa ./site/ebin
-
-## Include .beam files for dependencies.
--pa ./deps/*/ebin
 
 ## Run code at startup.
 -eval "application:start(nitrogen)"
